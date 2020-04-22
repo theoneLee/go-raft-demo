@@ -1,43 +1,56 @@
 package model
 
+import (
+	"sync"
+	"time"
+)
+
 const (
 	FOLLOWER = iota
 	CANDIDATE
 	LEADER
+
+	HBINTERVAL = 50 * time.Millisecond //heart beat interval
 )
 
-type State struct {
-	//todo 当前节点的id ？
-	ServerId int64
-	Role     int
+type RaftNode struct {
+	mu        sync.Mutex
+	peers     []*Peer //集群上所有节点的通讯端
+	persister *Persister
+	me        int //当前raftnode位于peers的index
 
-	CurrentTerm int64       //服务器最后一次知道的任期号（初始化为 0，持续递增）
-	VotedFor    int64       //在当前获得选票的候选人的 Id
-	Log         []LogEntity //日志条目集；每一个条目包含一个用户状态机执行的指令，和收到时的任期号
+	state         int // 当前节点身份
+	voteCount     int
+	chanCommit    chan bool
+	chanHeartbeat chan bool
+	chanGrantVote chan bool
+	chanLeader    chan bool
+	chanApply     chan ApplyMsg
 
-	//所有服务器上经常变的
-	CommitIndex int64
-	LastApplied int64
+	//在所有servers都要保持的
+	currentTerm int
+	voteFor     int
+	log         []LogEntry
 
-	//在领导人里经常改变的 （选举后重新初始化）
-	//NextIndex []int64
-	//MatchIndex []int64
-	NextIndex  map[int64]int64
-	MatchIndex map[int64]int64
+	//在所有servers都易变
+	commitIndex int
+	lastApplied int
+
+	//在leader节点易变的
+	nextIndex  []int
+	matchIndex []int
 }
 
-type LogEntity struct {
-	Index   int64
-	Term    int64
-	Command string
+// 已
+type ApplyMsg struct {
+	Index   int
+	Command interface{}
+	//UseSnapshot bool   //todo 快照
+	//Snapshot    []byte //
 }
 
-var s *State
-
-func New() *State {
-	//todo
-}
-
-func GetState() *State {
-	return s
+type LogEntry struct {
+	LogIndex   int
+	LogTerm    int
+	LogCommand interface{}
 }
