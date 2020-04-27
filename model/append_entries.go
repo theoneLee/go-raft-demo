@@ -11,7 +11,7 @@ type AppendEntriesReply struct {
 	Success bool
 }
 
-func (r *RpcMethod) AppendEntries(args AppendEntriesArgs, reply *AppendEntriesReply) error {
+func (r *RpcMethod) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) error {
 	rf := getCurRaftNode(args.RequestServerId) //r.rf
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
@@ -24,5 +24,6 @@ func (r *RpcMethod) AppendEntries(args AppendEntriesArgs, reply *AppendEntriesRe
 	rf.currentTerm = args.Term
 	rf.electionTimer.Reset(randTimeDuration(ElectionTimeoutLower, ElectionTimeoutUpper))
 	rf.convertTo(FOLLOWER)
+	//fmt.Println("AppendEntries success reply:", reply)
 	return nil
 }

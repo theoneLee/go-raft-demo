@@ -14,7 +14,7 @@ type RequestVoteReply struct {
 	VoteGranted bool
 }
 
-func (r *RpcMethod) RequestVote(args RequestVoteArgs, reply *RequestVoteReply) error {
+func (r *RpcMethod) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) error {
 	rf := getCurRaftNode(args.RequestServerId) //r.rf
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
@@ -29,7 +29,7 @@ func (r *RpcMethod) RequestVote(args RequestVoteArgs, reply *RequestVoteReply) e
 	rf.votedFor = args.CandidateId
 	rf.currentTerm = args.Term
 	reply.VoteGranted = true
-	fmt.Println("RequestVote reply:", reply)
+	//fmt.Println("RequestVote success reply:", reply)
 	// 投票后重置计时器
 	rf.electionTimer.Reset(randTimeDuration(ElectionTimeoutLower, ElectionTimeoutUpper))
 	rf.convertTo(FOLLOWER)

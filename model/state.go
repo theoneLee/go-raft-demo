@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-var curRaftNode *RaftNode //当前raftNode，每一个state实例各有一个，测试/运行时，需要run 3个state，注意先注册rpc server，在构建peers
-var raftNodeList []*RaftNode
+var raftNodeList []*RaftNode //用于rpc调用时，获取被调用的当前RaftNode
 
 func MakeRaftNodeList(len int) {
 	raftNodeList = make([]*RaftNode, len)
@@ -21,7 +20,7 @@ const (
 	CANDIDATE
 	LEADER
 
-	HeartbeatInterval    = time.Duration(120) * time.Millisecond
+	HeartbeatInterval    = time.Duration(50) * time.Millisecond //调高该值 容易触发 leader选举 150ms
 	ElectionTimeoutLower = time.Duration(300) * time.Millisecond
 	ElectionTimeoutUpper = time.Duration(400) * time.Millisecond
 )
@@ -120,6 +119,7 @@ func (rf *RaftNode) broadcastHeartbeat() {
 		}
 		go func(server int) {
 			var reply AppendEntriesReply
+			fmt.Println("sendAppendEntries(server, &args, &reply)", server, &args)
 			if rf.sendAppendEntries(server, &args, &reply) {
 				rf.mu.Lock()
 				if reply.Term > rf.currentTerm {
@@ -153,6 +153,7 @@ func (rf *RaftNode) startElection() {
 		}
 		go func(server int) {
 			var reply RequestVoteReply
+			fmt.Println("sendRequestVote(server, &args, &reply)", server, &args)
 			if rf.sendRequestVote(server, &args, &reply) {
 				rf.mu.Lock()
 
